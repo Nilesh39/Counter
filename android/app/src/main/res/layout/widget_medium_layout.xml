@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="horizontal"
+    android:padding="12dp"
+    android:background="@drawable/widget_background"
+    android:gravity="center_vertical">
+
+    <!-- Left Stats Side -->
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+        <!-- Title -->
+        <TextView
+            android:id="@+id/widget_medium_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="ॐ Naam Jap Counter"
+            android:textColor="#EA580C"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            android:fontFamily="sans-serif-medium"
+            android:layout_marginBottom="4dp" />
+
+        <!-- Chants count -->
+        <TextView
+            android:id="@+id/widget_medium_chants_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Chants: 0 / 1080"
+            android:textColor="#FDFBF7"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:fontFamily="sans-serif"
+            android:layout_marginBottom="2dp" />
+
+        <!-- Streak -->
+        <TextView
+            android:id="@+id/widget_medium_streak_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Streak: 0 Days 🔥"
+            android:textColor="#8A7F75"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            android:fontFamily="sans-serif" />
+    </LinearLayout>
+
+    <!-- Right Quick Chant Button -->
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:gravity="center"
+        android:layout_marginStart="8dp"
+        android:padding="4dp">
+
+        <TextView
+            android:id="@+id/widget_medium_chant_button"
+            android:layout_width="60dp"
+            android:layout_height="60dp"
+            android:background="@drawable/widget_button_circle"
+            android:text="ॐ"
+            android:textColor="#FFFFFF"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:gravity="center"
+            android:focusable="true"
+            android:clickable="true" />
+    </LinearLayout>
+</LinearLayout>

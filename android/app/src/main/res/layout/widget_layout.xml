@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="12dp"
+    android:background="@drawable/widget_background"
+    android:gravity="center_vertical">
+
+    <!-- Header Title -->
+    <TextView
+        android:id="@+id/widget_title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="ॐ Naam Jap"
+        android:textColor="#EA580C"
+        android:textSize="12sp"
+        android:textStyle="bold"
+        android:fontFamily="sans-serif-medium"
+        android:letterSpacing="0.05"
+        android:layout_marginBottom="4dp" />
+
+    <!-- Chants Count Row -->
+    <TextView
+        android:id="@+id/widget_chants_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Chants: 0 / 1080"
+        android:textColor="#FDFBF7"
+        android:textSize="13sp"
+        android:textStyle="bold"
+        android:fontFamily="sans-serif"
+        android:layout_marginBottom="2dp" />
+
+    <!-- Progress Bar -->
+    <ProgressBar
+        android:id="@+id/widget_progress_bar"
+        style="?android:attr/progressBarStyleHorizontal"
+        android:layout_width="match_parent"
+        android:layout_height="6dp"
+        android:layout_marginTop="4dp"
+        android:layout_marginBottom="4dp"
+        android:max="1080"
+        android:progress="0"
+        android:progressTint="#EA580C" />
+
+    <!-- Streak Day Counter -->
+    <TextView
+        android:id="@+id/widget_streak_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Streak: 0 Days 🔥"
+        android:textColor="#8A7F75"
+        android:textSize="10sp"
+        android:textStyle="bold"
+        android:fontFamily="sans-serif" />
+</LinearLayout>
