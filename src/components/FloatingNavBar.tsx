@@ -36,7 +36,7 @@ const labelMap: Record<string, string> = {
   'RadhaJap': '11 Crore'
 };
 
-export const FloatingNavBar: React.FC<NavBarProps> = ({ currentTab, setTab, themeId, customNavTabs }) => {
+export const FloatingNavBar: React.FC<NavBarProps> = React.memo(({ currentTab, setTab, themeId, customNavTabs }) => {
   const activeTheme = THEMES[themeId] || THEMES['saffron-divine'];
   const isDark = activeTheme.isDark;
   
@@ -123,6 +123,6 @@ export const FloatingNavBar: React.FC<NavBarProps> = ({ currentTab, setTab, them
       </View>
     </View>
   );
-};
+});
 
 export default FloatingNavBar;

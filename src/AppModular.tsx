@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   SafeAreaView,
   View,
@@ -62,6 +62,15 @@ export default function AppModular() {
   const [activeTab, setActiveTab] = useState<string>('Dashboard');
   const [isMenuOpen, setIsMenuOpen] = useState<boolean>(false);
 
+  const handleSetTab = useCallback((tab: string) => {
+    if (tab === 'Menu') {
+      setIsMenuOpen(true);
+    } else {
+      setIsMenuOpen(false);
+      setActiveTab(tab);
+    }
+  }, []);
+
   const activeTheme = state ? (THEMES[state.settings.themeId] || THEMES['saffron-divine']) : THEMES['saffron-divine'];
   const isDark = activeTheme.isDark;
 
@@ -77,16 +86,33 @@ export default function AppModular() {
     }
   }, [state?.settings.themeId, activeTheme]);
 
-  // Sync Android Home Screen Widget on state changes
+  // Sync Android Home Screen Widget on state changes (throttled to avoid IPC/broadcast thrashing on rapid taps)
+  const lastWidgetSyncRef = useRef<number>(0);
+  const widgetTimeoutRef = useRef<any>(null);
+
   useEffect(() => {
     if (state && Platform.OS === 'android') {
       const { NaamJapWidgetModule } = NativeModules;
-      if (NaamJapWidgetModule) {
+      if (!NaamJapWidgetModule) return;
+
+      const now = Date.now();
+      if (now - lastWidgetSyncRef.current > 1500 || state.totalChantsToday % 10 === 0) {
+        lastWidgetSyncRef.current = now;
         NaamJapWidgetModule.updateWidgetData(
           state.totalChantsToday,
           state.dailyGoalChants,
           state.streakDays
         );
+      } else {
+        if (widgetTimeoutRef.current) clearTimeout(widgetTimeoutRef.current);
+        widgetTimeoutRef.current = setTimeout(() => {
+          lastWidgetSyncRef.current = Date.now();
+          NaamJapWidgetModule.updateWidgetData(
+            state.totalChantsToday,
+            state.dailyGoalChants,
+            state.streakDays
+          );
+        }, 1500);
       }
     }
   }, [state?.totalChantsToday, state?.dailyGoalChants, state?.streakDays]);
@@ -254,14 +280,7 @@ export default function AppModular() {
       {/* Floating Pill Nav Bar */}
       <FloatingNavBar
         currentTab={activeTab}
-        setTab={(tab) => {
-          if (tab === 'Menu') {
-            setIsMenuOpen(true);
-          } else {
-            setIsMenuOpen(false);
-            setActiveTab(tab);
-          }
-        }}
+        setTab={handleSetTab}
         themeId={state.settings.themeId}
         customNavTabs={state.settings.customNavTabs}
       />

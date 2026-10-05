@@ -77,7 +77,7 @@ const QUOTES: BlessingQuote[] = [
   },
 ];
 
-export const RadhaBlessings: React.FC<BlessingsProps> = ({ themeId }) => {
+export const RadhaBlessings: React.FC<BlessingsProps> = React.memo(({ themeId }) => {
   const activeTheme = THEMES[themeId] || THEMES['saffron-divine'];
   const [index, setIndex] = useState(0);
 
@@ -142,7 +142,7 @@ export const RadhaBlessings: React.FC<BlessingsProps> = ({ themeId }) => {
       </View>
     </View>
   );
-};
+});
 
 const styles = StyleSheet.create({
   card: {

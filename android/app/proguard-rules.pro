@@ -11,4 +11,9 @@
 -keep class com.swmansion.reanimated.** { *; }
 -keep class com.facebook.react.turbomodule.** { *; }
 
-# Add any project specific keep options here:
+# Naam Jap custom native module & widget providers
+-keep class com.spiritual.naamjaap.** { *; }
+
+# React Native & AsyncStorage
+-keep class com.facebook.react.** { *; }
+-keep class com.reactnativecommunity.asyncstorage.** { *; }

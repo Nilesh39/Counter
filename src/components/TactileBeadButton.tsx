@@ -48,7 +48,12 @@ interface Ripple {
   opacityAnim: Animated.Value;
 }
 
-export const TactileBeadButton: React.FC<TactileBeadProps> = ({ 
+// Module-level audio cache to avoid re-decoding audio on every tab mount
+let cachedTapSound: Audio.Sound | null = null;
+let cachedRadhaSound: Audio.Sound | null = null;
+let isAudioModeConfigured = false;
+
+export const TactileBeadButton: React.FC<TactileBeadProps> = React.memo(({ 
   onPress, 
   currentCount, 
   themeId,
@@ -187,40 +192,46 @@ export const TactileBeadButton: React.FC<TactileBeadProps> = ({
     handlePressRef.current = handlePress;
   }, [handlePress]);
 
-  // Load tap click sound on mount
+  // Load tap click sound on mount, reusing cached instances
   useEffect(() => {
-    let tapSound: Audio.Sound | null = null;
-    let radhaSound: Audio.Sound | null = null;
-
-    const loadTapSound = async () => {
-      try {
-        const { sound: s1 } = await Audio.Sound.createAsync(
-          require('../../assets/tap_click.mp3')
-        );
-        tapSound = s1;
-        tapSoundRef.current = s1;
-      } catch (err) {
-        console.warn('Failed to pre-load wooden click sound', err);
+    let isMounted = true;
+    const loadSounds = async () => {
+      if (!isAudioModeConfigured) {
+        isAudioModeConfigured = true;
+        Audio.setAudioModeAsync({
+          playsInSilentModeIOS: true,
+          shouldDuckAndroid: true
+        }).catch(() => {});
       }
 
-      try {
-        const { sound: s2 } = await Audio.Sound.createAsync(
-          require('../../assets/radha_chime.mp3')
-        );
-        radhaSound = s2;
-        radhaSoundRef.current = s2;
-      } catch (err) {
-        console.warn('Failed to pre-load radha chime sound', err);
+      if (!cachedTapSound) {
+        try {
+          const { sound: s1 } = await Audio.Sound.createAsync(
+            require('../../assets/tap_click.mp3')
+          );
+          cachedTapSound = s1;
+        } catch (err) {
+          console.warn('Failed to pre-load wooden click sound', err);
+        }
       }
+      if (isMounted) tapSoundRef.current = cachedTapSound;
+
+      if (!cachedRadhaSound) {
+        try {
+          const { sound: s2 } = await Audio.Sound.createAsync(
+            require('../../assets/radha_chime.mp3')
+          );
+          cachedRadhaSound = s2;
+        } catch (err) {
+          console.warn('Failed to pre-load radha chime sound', err);
+        }
+      }
+      if (isMounted) radhaSoundRef.current = cachedRadhaSound;
     };
-    loadTapSound();
+
+    loadSounds();
     return () => {
-      if (tapSound) {
-        tapSound.unloadAsync().catch(() => {});
-      }
-      if (radhaSound) {
-        radhaSound.unloadAsync().catch(() => {});
-      }
+      isMounted = false;
     };
   }, []);
 
@@ -1232,6 +1243,6 @@ export const TactileBeadButton: React.FC<TactileBeadProps> = ({
       )}
     </View>
   );
-};
+});
 
 export default TactileBeadButton;

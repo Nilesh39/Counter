@@ -8,7 +8,7 @@ interface MarqueeProps {
   textStyle?: any;
 }
 
-export const Marquee: React.FC<MarqueeProps> = ({ 
+export const Marquee: React.FC<MarqueeProps> = React.memo(({ 
   text, 
   speed = 40, 
   direction = 'rtl', 
@@ -107,7 +107,7 @@ export const Marquee: React.FC<MarqueeProps> = ({
       )}
     </View>
   );
-};
+});
 
 const styles = StyleSheet.create({
   container: {

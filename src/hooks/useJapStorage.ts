@@ -113,15 +113,23 @@ export const evaluateBhaktiProgress = (state: AppState): AppState => {
   }
 
   let hasBrahmaMuhurtaChant = false;
-  Object.values(state.historyLogs).forEach(log => {
-    if (log.hourlyCounts && (log.hourlyCounts[4] > 0 || log.hourlyCounts[5] > 0)) {
+  if (!unlocked.includes('gold-bell')) {
+    const currentHour = new Date().getHours();
+    if (currentHour === 4 || currentHour === 5) {
       hasBrahmaMuhurtaChant = true;
+    } else {
+      for (const log of Object.values(state.historyLogs || {})) {
+        if (log.hourlyCounts && (log.hourlyCounts[4] > 0 || log.hourlyCounts[5] > 0)) {
+          hasBrahmaMuhurtaChant = true;
+          break;
+        }
+      }
     }
-  });
+  }
   if (hasBrahmaMuhurtaChant && !unlocked.includes('gold-bell')) {
     unlocked.push('gold-bell');
     nextStage = Math.max(nextStage, 4);
-  } else if (hasBrahmaMuhurtaChant) {
+  } else if (unlocked.includes('gold-bell')) {
     nextStage = Math.max(nextStage, 4);
   }
 
@@ -561,6 +569,11 @@ export const useJapStorage = () => {
     const subscription = RNAppState.addEventListener('change', nextAppState => {
       if (nextAppState === 'active') {
         syncWidgetChants();
+      } else if (nextAppState === 'background' || nextAppState === 'inactive') {
+        if (pendingSaveStateRef.current) {
+          AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(pendingSaveStateRef.current)).catch(() => {});
+          pendingSaveStateRef.current = null;
+        }
       }
     });
 
@@ -633,7 +646,7 @@ export const useJapStorage = () => {
           hourlyCounts: nextHourlyCounts
         };
 
-        const updatedStreak = calculateStreak(updatedHistory, todayStr);
+        const updatedStreak = oldTotalToday === 0 ? calculateStreak(updatedHistory, todayStr) : prevState.streakDays;
 
         let hitBigGoal = false;
         const updatedBigGoals = prevState.bigGoals.map(goal => {
@@ -727,21 +740,14 @@ export const useJapStorage = () => {
           clearTimeout(saveTimeoutRef.current);
         }
         
-        // Safety save every 10 chants so the user never loses progress
-        if (nextTotalToday % 10 === 0) {
-          AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updatedState)).catch(e => {
-            console.error('Failed to save state to storage', e);
-          });
-        } else {
-          saveTimeoutRef.current = setTimeout(() => {
-            if (pendingSaveStateRef.current) {
-              AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(pendingSaveStateRef.current)).catch(e => {
-                console.error('Failed to save state to storage', e);
-              });
-              pendingSaveStateRef.current = null;
-            }
-          }, 1500);
-        }
+        saveTimeoutRef.current = setTimeout(() => {
+          if (pendingSaveStateRef.current) {
+            AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(pendingSaveStateRef.current)).catch(e => {
+              console.error('Failed to save state to storage', e);
+            });
+            pendingSaveStateRef.current = null;
+          }
+        }, 1000);
 
         resolve({ hitMalaComplete, hitDailyGoal, hitBigGoal });
         return updatedState;

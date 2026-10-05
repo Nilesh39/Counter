@@ -11,7 +11,7 @@ interface ProgressRingProps {
   children?: React.ReactNode;
 }
 
-export const ProgressRing: React.FC<ProgressRingProps> = ({
+export const ProgressRing: React.FC<ProgressRingProps> = React.memo(({
   size,
   strokeWidth,
   progress,
@@ -60,6 +60,6 @@ export const ProgressRing: React.FC<ProgressRingProps> = ({
       </View>
     </View>
   );
-};
+});
 
 export default ProgressRing;

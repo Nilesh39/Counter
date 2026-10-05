@@ -50,7 +50,7 @@ const STAGE_DETAILS = {
   'Shriji Mandir': "The grand crown palace temple atop Bhanugarh hill in Barsana, celebrating the childhood home of Shri Radha Rani."
 };
 
-export const DashboardScreen: React.FC<DashboardScreenProps> = ({ state, increment, resetMala, setDailyGoal, setTab, setActiveDashboardGoal }) => {
+export const DashboardScreen: React.FC<DashboardScreenProps> = React.memo(({ state, increment, resetMala, setDailyGoal, setTab, setActiveDashboardGoal }) => {
   const activeTheme = THEMES[state.settings.themeId] || THEMES['saffron-divine'];
   
   const activeGoalId = state.settings.activeDashboardGoalId ?? 'daily';
@@ -86,8 +86,8 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({ state, increme
   // Parikrama timeline stage details modal state
   const [activeTooltip, setActiveTooltip] = useState<{ name: string; max: number; color: string } | null>(null);
 
-  // Chanting Speed (CPM) tracker states
-  const [tapTimes, setTapTimes] = useState<number[]>([]);
+  // Chanting Speed (CPM) tracker ref and state (ref prevents double re-render per chant)
+  const tapTimesRef = useRef<number[]>([]);
   const [cpm, setCpm] = useState<number>(0);
 
   // Press Scale Animations for Cards
@@ -273,27 +273,23 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({ state, increme
     };
   }, []);
 
-  // Poll CPM stats decay every second
+  // Poll CPM stats decay every second without triggering idle re-renders
   useEffect(() => {
     const interval = setInterval(() => {
       const now = Date.now();
-      setTapTimes(prev => {
-        const filtered = prev.filter(t => now - t < 8000);
-        if (filtered.length < 2) {
-          setCpm(0);
-        } else {
-          const first = filtered[0];
-          const last = filtered[filtered.length - 1];
-          const diffSeconds = (last - first) / 1000;
-          if (diffSeconds > 0) {
-            const tapsPerSecond = (filtered.length - 1) / diffSeconds;
-            setCpm(Math.round(tapsPerSecond * 60));
-          } else {
-            setCpm(0);
-          }
-        }
-        return filtered;
-      });
+      const currentTaps = tapTimesRef.current;
+      if (currentTaps.length === 0) return;
+
+      const filtered = currentTaps.filter(t => now - t < 8000);
+      tapTimesRef.current = filtered;
+
+      if (filtered.length < 2) {
+        setCpm(prev => (prev === 0 ? prev : 0));
+      } else {
+        const diffSeconds = (filtered[filtered.length - 1] - filtered[0]) / 1000;
+        const nextCpm = diffSeconds > 0 ? Math.round(((filtered.length - 1) / diffSeconds) * 60) : 0;
+        setCpm(prev => (prev === nextCpm ? prev : nextCpm));
+      }
     }, 1000);
 
     return () => clearInterval(interval);
@@ -306,10 +302,17 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({ state, increme
 
   const handleIncrement = async () => {
     const now = Date.now();
-    setTapTimes(prev => {
-      const filtered = prev.filter(t => now - t < 8000);
-      return [...filtered, now];
-    });
+    const currentTaps = tapTimesRef.current.filter(t => now - t < 8000);
+    currentTaps.push(now);
+    tapTimesRef.current = currentTaps;
+
+    if (currentTaps.length >= 2) {
+      const diffSeconds = (currentTaps[currentTaps.length - 1] - currentTaps[0]) / 1000;
+      if (diffSeconds > 0) {
+        const nextCpm = Math.round(((currentTaps.length - 1) / diffSeconds) * 60);
+        setCpm(prev => (prev === nextCpm ? prev : nextCpm));
+      }
+    }
 
     const result = await increment();
     if (result && (result.hitDailyGoal || result.hitBigGoal)) {
@@ -353,12 +356,12 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({ state, increme
     });
   };
 
-  // Calculate the highest consecutive chanting streak from historyLogs
-  const getLongestStreak = () => {
+  // Calculate the highest consecutive chanting streak from historyLogs (memoized to avoid sorting on every render)
+  const longestStreak = useMemo(() => {
     let maxStreak = 0;
     let tempStreak = 0;
     let lastDateStr: string | null = null;
-    const dates = Object.keys(state.historyLogs).sort();
+    const dates = Object.keys(state.historyLogs || {}).sort();
 
     if (dates.length === 0) return state.streakDays;
 
@@ -388,7 +391,13 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({ state, increme
 
     maxStreak = Math.max(maxStreak, tempStreak);
     return Math.max(maxStreak, state.streakDays);
-  };
+  }, [state.historyLogs, state.streakDays]);
+
+  const marqueeTextStyle = useMemo(() => ({
+    color: activeTheme.colors.accent,
+    fontSize: 12,
+    fontWeight: '900' as const,
+  }), [activeTheme.colors.accent]);
 
   const currentQuoteObj = SPIRITUAL_QUOTES[quoteIdx];
 
@@ -459,11 +468,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({ state, increme
             text={state.settings.marqueeText} 
             direction={state.settings.marqueeDirection} 
             speed={40} 
-            textStyle={{
-              color: activeTheme.colors.accent,
-              fontSize: 12,
-              fontWeight: '900',
-            }}
+            textStyle={marqueeTextStyle}
           />
         </View>
       )}
@@ -1020,7 +1025,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({ state, increme
                   {streakShowLongest ? 'Longest Streak' : 'Chant Streak'}
                 </Text>
                 <Text style={{ color: activeTheme.colors.textPrimary }} className="text-lg font-black mt-0.5">
-                  {streakShowLongest ? getLongestStreak() : state.streakDays} Days
+                  {streakShowLongest ? longestStreak : state.streakDays} Days
                 </Text>
               </View>
             </Animated.View>
@@ -1265,7 +1270,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({ state, increme
     )}
   </View>
 );
-};
+});
 
 const styles = StyleSheet.create({
   diyaWrapper: {
